@@ -5,3 +5,10 @@ pymongo
 python-dotenv
 pydantic[email]
 email-validator
+
+# Correct JWT library
+python-jose[cryptography]
+
+# FIXED bcrypt + passlib versions
+bcrypt==4.0.1
+passlib[bcrypt]==1.7.4

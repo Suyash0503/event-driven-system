@@ -7,9 +7,10 @@ class UserBase(BaseModel):
     name: str
     email: EmailStr
     delivery_address: str
+    password: str   # Password added (required for login)
 
 
-# Cleaner update model (one model instead of two in v1)
+# Cleaner update model
 class UserUpdate(BaseModel):
     email: Optional[EmailStr] = None
     delivery_address: Optional[str] = None
@@ -21,3 +22,15 @@ class UserResponse(BaseModel):
     name: str
     email: EmailStr
     delivery_address: str
+
+
+# Login request model
+class Login(BaseModel):
+    email: str
+    password: str
+
+
+# Token response model
+class Token(BaseModel):
+    access_token: str
+    token_type: str = "bearer"
