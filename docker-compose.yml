@@ -1,0 +1,114 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+  # -----------------------------
+  # ORCHESTRATOR (HTTP)
+  # -----------------------------
+  orchestrator_service:
+    build: ./orchestrator_service
+    container_name: orchestrator_service
+    ports:
+      - "8004:8004"
+    environment:
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+
+  # -----------------------------
+  # API GATEWAY (HTTP)
+  # -----------------------------
+  api_gateway:
+    build: ./api_gateway
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - orchestrator_service
+    environment:
+      - GATEWAY_CONFIG=/app/gateway_config.json
+      # optional (if you prefer env-driven target)
+      - ORCHESTRATOR_URL=http://orchestrator_service:8004
+
+  # -----------------------------
+  # USER SERVICE V1 (TOOL API)
+  # -----------------------------
+  user_service_v1:
+    build: ./user_service_v1
+    container_name: user_service_v1
+    ports:
+      - "8002:8002"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+
+  # -----------------------------
+  # USER SERVICE V2 (TOOL API)
+  # -----------------------------
+  user_service_v2:
+    build: ./user_service_v2
+    container_name: user_service_v2
+    ports:
+      - "8003:8003"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+
+  # -----------------------------
+  # ORDER SERVICE (TOOL API)
+  # -----------------------------
+  order_service:
+    build: ./order_service
+    container_name: order_service
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+
+  # -----------------------------
+  # AGENT WORKERS (NO HTTP)
+  # -----------------------------
+  user_agent_worker:
+    build: ./agents
+    container_name: user_agent_worker
+    command: python user_agent_worker.py
+    restart: unless-stopped
+    environment:
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+      - USER_V1_URL=http://user_service_v1:8002
+      - USER_V2_URL=http://user_service_v2:8003
+    depends_on:
+      - rabbitmq
+      - user_service_v1
+      - user_service_v2
+
+  order_agent_worker:
+    build: ./agents
+    container_name: order_agent_worker
+    command: python order_agent_worker.py
+    environment:
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+      - ORDER_URL=http://order_service:8001
+      - USER_V1_URL=http://user_service_v1:8002
+      - USER_V2_URL=http://user_service_v2:8003
+    depends_on:
+      - rabbitmq
+      - order_service
+      - user_service_v1
+      - user_service_v2

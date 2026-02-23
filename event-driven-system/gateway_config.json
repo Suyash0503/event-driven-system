@@ -1,0 +1,12 @@
+{
+  "routing": {
+    "user_split": 0.7
+
+  },
+
+  "services": {
+    "user_v1": "http://localhost:8002",
+    "user_v2": "http://localhost:8003",
+    "order_service": "http://localhost:8001"
+  }
+}

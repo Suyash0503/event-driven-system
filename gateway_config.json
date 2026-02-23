@@ -1,0 +1,12 @@
+{
+  "routing": {
+    "user_split": 1.0
+
+  },
+
+  "services": {
+  "user_v1": "http://127.0.0.1:8002",
+  "user_v2": "http://127.0.0.1:8003",
+  "order_service": "http://127.0.0.1:8001"
+  }
+}
