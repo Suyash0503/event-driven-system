@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  rabbitmq:
+    image: rabbitmq:3.11-management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # RabbitMQ Messaging Port
+      - "15672:15672"   # RabbitMQ Dashboard (Management UI)
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+
+      # API Gateway
+  # -----------------------------
+  api_gateway:
+    build: ./api_gateway
+    container_name: api_gateway
+    ports:
+      - "8000:8000"
+    depends_on:
+      - user_service_v1
+      - user_service_v2
+      - order_service
+    environment:
+      - GATEWAY_CONFIG=/app/gateway_config.json
+
+  # -----------------------------
+  # USER SERVICE V1
+  # -----------------------------
+  user_service_v1:
+    build: ./user_service_v1
+    container_name: user_service_v1
+    ports:
+      - "8002:8002"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+
+  # -----------------------------
+  # USER SERVICE V2
+  # -----------------------------
+  user_service_v2:
+    build: ./user_service_v2
+    container_name: user_service_v2
+    ports:
+      - "8003:8003"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
+
+  # -----------------------------
+  # ORDER SERVICE
+  # -----------------------------
+  order_service:
+    build: ./order_service
+    container_name: order_service
+    ports:
+      - "8001:8001"
+    environment:
+      - MONGO_URL=${MONGO_URL}
+      - RABBIT_URL=amqp://guest:guest@rabbitmq:5672/
+    depends_on:
+      - rabbitmq
