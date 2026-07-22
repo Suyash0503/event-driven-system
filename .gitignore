@@ -1,8 +1,11 @@
-﻿**/.env
-*.env
-venv/
+﻿venv/
 .venv/
-.vscode/
-**/__pycache__/
+.env
+**/.env
+__pycache__/
 *.pyc
-*.log
+40317581_A2/
+event-driven-system/
+
+
+
